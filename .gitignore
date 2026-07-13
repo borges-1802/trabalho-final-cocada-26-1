@@ -24,3 +24,8 @@ models_tree.pickle
 
 # For front-end/
 **node_modules**
+frontend/dist
+frontend/.vite
+frontend/.env.production
+frontend/.env.local
+.vercel
