@@ -25,6 +25,7 @@ export default function Compressor() {
   const dragStart = useRef<{ x: number; y: number } | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const debounceRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const updateImgOffset = () => {
     if (!imgRef.current) return;
@@ -55,6 +56,9 @@ export default function Compressor() {
 
   const runCompress = async () => {
     if (!app.file) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -62,18 +66,23 @@ export default function Compressor() {
       app.setRegion(region);
       let blob: Blob;
       if (region && app.mode === 'global') {
-        blob = await compressRegionGlobal(app.kRegion, app.kBase, app.file, region);
+        blob = await compressRegionGlobal(app.kRegion, app.kBase, app.file, region, ctrl.signal);
       } else if (region && app.mode === 'tiles') {
-        blob = await compressRegion(app.kRegion, app.kBase, app.file, region);
+        blob = await compressRegion(app.kRegion, app.kBase, app.file, region, ctrl.signal);
       } else {
-        blob = await compress(app.kBase, app.file);
+        blob = await compress(app.kBase, app.file, ctrl.signal);
       }
+      if (ctrl.signal.aborted) return;
       app.setCompressedUrl(URL.createObjectURL(blob));
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error(err);
       setErrorMsg(err instanceof Error ? err.message : String(err));
     } finally {
-      setLoading(false);
+      if (abortRef.current === ctrl) {
+        abortRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
@@ -117,7 +126,7 @@ export default function Compressor() {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
       runCompress();
-    }, 300);
+    }, 600);
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
