@@ -89,7 +89,6 @@ export default function Compressor() {
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    app.setFile(f);
     app.setOriginalUrl(URL.createObjectURL(f));
     app.setCompressedUrl(null);
     app.setSelectionBox(null);
@@ -98,6 +97,7 @@ export default function Compressor() {
     setRect({ x: 0, y: 0, w: 0, h: 0 });
     setErrorMsg(null);
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    abortRef.current?.abort();
     try {
       const info = await getMaxK(f);
       const newKBase = Math.max(1, Math.floor(info.k_max * 0.15));
@@ -106,18 +106,11 @@ export default function Compressor() {
       app.setKBase(newKBase);
       app.setKRegion(newKRegion);
       app.setImageDims({ width: info.width, height: info.height });
-      setLoading(true);
-      try {
-        const blob = await compress(newKBase, f);
-        app.setCompressedUrl(URL.createObjectURL(blob));
-      } finally {
-        setLoading(false);
-      }
+      app.setFile(f);
       svdStats(f).then((s) => app.setStats(s)).catch(console.error);
     } catch (err) {
       console.error(err);
       setErrorMsg(err instanceof Error ? err.message : String(err));
-      setLoading(false);
     }
   };
 
@@ -131,7 +124,7 @@ export default function Compressor() {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [app.kBase, app.kRegion, app.mode, app.selectionBox]);
+  }, [app.file, app.kBase, app.kRegion, app.mode, app.selectionBox]);
 
   const onMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
     const el = e.currentTarget;
