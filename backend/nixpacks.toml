@@ -1,0 +1,19 @@
+providers = ["python"]
+
+[phases.setup]
+nixPkgs = ["python312", "gcc"]
+aptPkgs = ["build-essential"]
+
+[phases.install]
+cmds = [
+  "python -m venv --copies /opt/venv",
+  ". /opt/venv/bin/activate && pip install --upgrade pip",
+  ". /opt/venv/bin/activate && pip install -r requirements.txt",
+]
+
+[start]
+cmd = ". /opt/venv/bin/activate && python main.py"
+
+[variables]
+PYTHONUNBUFFERED = "1"
+PIP_DISABLE_PIP_VERSION_CHECK = "1"
