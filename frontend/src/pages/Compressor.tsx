@@ -4,7 +4,6 @@ import {
   compressRegion,
   compressRegionGlobal,
   getMaxK,
-  svdStats,
 } from '../api';
 import { useApp } from '../AppContext';
 
@@ -93,7 +92,7 @@ export default function Compressor() {
     app.setCompressedUrl(null);
     app.setSelectionBox(null);
     app.setRegion(null);
-    app.setStats(null);
+    app.setStats(null);  // força recomputar quando abrir Análise
     setRect({ x: 0, y: 0, w: 0, h: 0 });
     setErrorMsg(null);
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -109,7 +108,6 @@ export default function Compressor() {
       app.setOriginalDims({ width: info.original_width, height: info.original_height });
       app.setWasResized(info.was_resized);
       app.setFile(f);
-      svdStats(f).then((s) => app.setStats(s)).catch(console.error);
     } catch (err) {
       console.error(err);
       setErrorMsg(err instanceof Error ? err.message : String(err));

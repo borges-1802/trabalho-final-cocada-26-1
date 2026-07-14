@@ -6,7 +6,10 @@ from fastapi import UploadFile
 from scipy.sparse.linalg import svds
 from concurrent.futures import ThreadPoolExecutor
 
-_pool = ThreadPoolExecutor(max_workers=3)
+# Em tier gratuito (0.5 vCPU), paralelismo por canal só piora — cada thread compete
+# pela mesma CPU. Com BLAS já limitado a 1 thread (via env), 1 worker mantém
+# tudo linear e previsível. Aumente pra 3 em ambiente com múltiplos cores dedicados.
+_pool = ThreadPoolExecutor(max_workers=int(os.environ.get("SVD_POOL_WORKERS", "1")))
 
 # Cap no maior lado da imagem antes de qualquer SVD.
 # Evita OOM/timeout em tiers gratuitos (Railway trial, Render free, etc).

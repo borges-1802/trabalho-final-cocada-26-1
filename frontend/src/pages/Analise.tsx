@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { errorMap } from '../api';
+import { errorMap, svdStats } from '../api';
 import { useApp } from '../AppContext';
 import { Link } from 'react-router-dom';
 
@@ -70,6 +70,27 @@ export default function Analise() {
   const [measuredFrobR, setMeasuredFrobR] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  // Carrega svd-stats sob demanda quando a Análise abre e o arquivo mudou.
+  useEffect(() => {
+    let cancelled = false;
+    if (!app.file || app.stats) return;
+    setStatsLoading(true);
+    svdStats(app.file)
+      .then((s) => {
+        if (!cancelled) app.setStats(s);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) setErrorMsg(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setStatsLoading(false);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app.file]);
 
   useEffect(() => {
     let cancelled = false;
@@ -336,7 +357,9 @@ export default function Analise() {
             </div>
           </div>
         ) : (
-          <p className="placeholder">Carregando estatísticas…</p>
+          <p className="placeholder">
+            {statsLoading ? 'Calculando estatísticas SVD no servidor…' : 'Aguardando dados.'}
+          </p>
         )}
       </section>
 
