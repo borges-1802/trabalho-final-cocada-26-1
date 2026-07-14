@@ -7,7 +7,7 @@ from routers.api import router
 
 app = FastAPI()
 
-IS_PROD = os.environ.get("RENDER") == "true" or os.environ.get("ENV") == "production"
+IS_DEV = os.environ.get("ENV") == "dev"
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,7 +36,7 @@ server = Server(
         port=int(os.environ.get("PORT", 8000)),
         proxy_headers=True,
         forwarded_allow_ips="*",
-        reload=not IS_PROD,
+        reload=IS_DEV,
         server_header=False,
     ),
 )
