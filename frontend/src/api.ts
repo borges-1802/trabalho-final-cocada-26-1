@@ -4,6 +4,9 @@ export interface ImageInfo {
   width: number;
   height: number;
   k_max: number;
+  original_width: number;
+  original_height: number;
+  was_resized: boolean;
 }
 
 export interface SvdStats {

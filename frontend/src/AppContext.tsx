@@ -26,6 +26,10 @@ interface AppState {
   setStats: (s: SvdStats | null) => void;
   imageDims: { width: number; height: number } | null;
   setImageDims: (d: AppState['imageDims']) => void;
+  originalDims: { width: number; height: number } | null;
+  setOriginalDims: (d: AppState['originalDims']) => void;
+  wasResized: boolean;
+  setWasResized: (v: boolean) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -42,6 +46,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [region, setRegion] = useState<Region | null>(null);
   const [stats, setStats] = useState<SvdStats | null>(null);
   const [imageDims, setImageDims] = useState<AppState['imageDims']>(null);
+  const [originalDims, setOriginalDims] = useState<AppState['originalDims']>(null);
+  const [wasResized, setWasResized] = useState(false);
 
   const value: AppState = {
     file, setFile,
@@ -55,6 +61,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     region, setRegion,
     stats, setStats,
     imageDims, setImageDims,
+    originalDims, setOriginalDims,
+    wasResized, setWasResized,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

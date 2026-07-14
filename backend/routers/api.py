@@ -54,8 +54,14 @@ async def compress_image(
 
 @router.post("/max-k")
 async def get_max_k(file: UploadFile = File(...)):
-    img_np = load_img_into_numpy(file)
+    # Lê dimensões originais sem decodificar totalmente (Image.open é lazy)
+    file.file.seek(0)
+    from PIL import Image as PILImage
+    with PILImage.open(file.file) as pil:
+        orig_w, orig_h = pil.size
+    file.file.seek(0)
 
+    img_np = load_img_into_numpy(file)
     height, width = img_np.shape[:2]
     k_max = min(height, width)
 
@@ -64,6 +70,9 @@ async def get_max_k(file: UploadFile = File(...)):
             "width": int(width),
             "height": int(height),
             "k_max": int(k_max),
+            "original_width": int(orig_w),
+            "original_height": int(orig_h),
+            "was_resized": bool(orig_w != width or orig_h != height),
         }
     )
 

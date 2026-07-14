@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import io
 from PIL import Image
@@ -7,10 +8,25 @@ from concurrent.futures import ThreadPoolExecutor
 
 _pool = ThreadPoolExecutor(max_workers=3)
 
+# Cap no maior lado da imagem antes de qualquer SVD.
+# Evita OOM/timeout em tiers gratuitos (Railway trial, Render free, etc).
+# Configurável via env var MAX_IMG_DIM.
+MAX_IMG_DIM = int(os.environ.get("MAX_IMG_DIM", "800"))
+
 
 def load_img_into_numpy(file: UploadFile) -> np.ndarray:
-    """Load an uploaded image file into a NumPy array (sempre RGB)."""
+    """Load an uploaded image file into a NumPy array (sempre RGB).
+
+    Se o maior lado passar de MAX_IMG_DIM, redimensiona mantendo proporção — o
+    processamento (SVD) escala com O(min(m,n)^2 * max(m,n)), então imagens grandes
+    inviabilizam o cálculo em tiers com pouca CPU/RAM.
+    """
     image = Image.open(file.file).convert("RGB")
+    w, h = image.size
+    if max(w, h) > MAX_IMG_DIM:
+        scale = MAX_IMG_DIM / max(w, h)
+        new_size = (max(1, int(w * scale)), max(1, int(h * scale)))
+        image = image.resize(new_size, Image.LANCZOS)
     return np.array(image)
 
 

@@ -106,6 +106,8 @@ export default function Compressor() {
       app.setKBase(newKBase);
       app.setKRegion(newKRegion);
       app.setImageDims({ width: info.width, height: info.height });
+      app.setOriginalDims({ width: info.original_width, height: info.original_height });
+      app.setWasResized(info.was_resized);
       app.setFile(f);
       svdStats(f).then((s) => app.setStats(s)).catch(console.error);
     } catch (err) {
@@ -200,6 +202,33 @@ export default function Compressor() {
               {app.file ? app.file.name : 'nenhum arquivo'}
             </span>
           </label>
+          {app.imageDims && (
+            <div className={`img-dims-badge ${app.wasResized ? 'resized' : ''}`}>
+              {app.wasResized && app.originalDims ? (
+                <>
+                  <span className="lbl">Processando em</span>
+                  <span className="val">
+                    {app.imageDims.width}×{app.imageDims.height}
+                  </span>
+                  <span className="orig">
+                    (original {app.originalDims.width}×{app.originalDims.height})
+                  </span>
+                  <div className="hint">
+                    Limite do servidor. SVD escala com O(mn²); imagens
+                    grandes estouram RAM/CPU. Fórmulas e teoremas seguem válidos
+                    sobre a matriz reduzida.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="lbl">Matriz</span>
+                  <span className="val">
+                    {app.imageDims.width}×{app.imageDims.height}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="field">
